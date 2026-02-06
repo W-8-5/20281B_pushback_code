@@ -24,22 +24,22 @@ class Robot:
         self.dt_width = 12.5
 
         self.left_drive = MotorGroup(
-            Motor(Ports.PORT11, GearSetting.RATIO_36_1),
-            Motor(Ports.PORT12, GearSetting.RATIO_36_1),
-            Motor(Ports.PORT13, GearSetting.RATIO_36_1)
+            Motor(Ports.PORT11, GearSetting.RATIO_6_1, True),
+            Motor(Ports.PORT12, GearSetting.RATIO_6_1, True),
+            Motor(Ports.PORT13, GearSetting.RATIO_6_1, True)
         )
 
         self.right_drive = MotorGroup(
-            Motor(Ports.PORT14, GearSetting.RATIO_36_1, True),
-            Motor(Ports.PORT15, GearSetting.RATIO_36_1, True),
-            Motor(Ports.PORT16, GearSetting.RATIO_36_1, True)
+            Motor(Ports.PORT14, GearSetting.RATIO_6_1),
+            Motor(Ports.PORT15, GearSetting.RATIO_6_1),
+            Motor(Ports.PORT16, GearSetting.RATIO_6_1)
         )
 
         self.left_drive.set_stopping(BRAKE)
         self.right_drive.set_stopping(BRAKE)
 
     def _setup_auton_selector(self):
-        self.auton_module = Triport(Ports.PORT20)
+        self.auton_module = Triport(Ports.PORT1)
 
         self.mode_switch = Limit(self.auton_module.a)
         self.color_switch = Limit(self.auton_module.b)
@@ -76,7 +76,7 @@ class Robot:
             100: (1, 0),
             75: (1, 0),
             50: (1, 0),
-            25: (1, 0)
+            25: (0.853571, 0.116667)
         }
         m, b = corrections[speed]
         return (distance - b) / m
@@ -88,7 +88,8 @@ class Robot:
         distance = self.drive_correction(inches, speed)
 
         wheel_turns = distance / (self.wheel_dia * math.pi)
-        motor_turns = wheel_turns * self.gear_ratio[0] / self.gear_ratio[1]
+        motor_turns = wheel_turns * self.gear_ratio[1] / self.gear_ratio[0]
+
 
         self.left_drive.spin_for(FORWARD, motor_turns, TURNS, wait=False)
         self.right_drive.spin_for(FORWARD, motor_turns, TURNS)
@@ -119,23 +120,23 @@ class Robot:
 
     def auton_m_l_b(self):
         # DRIVE FORWARD
-        self.drive(32, 100)
+        self.drive(32, 25)
         # ARC TOWARDS HOPPER
-        self.turn_about(-90, 100, -12)
+        self.turn_about(-90, 25, -12)
         # HOPPER LOAD
-        self.drive(12, 100)
-        self.drive(-12, 100)
+        self.drive(12, 25)
+        self.drive(-12, 25)
         # ARC BACKWARDS
-        self.turn_about(-90, 100, 12)
+        self.turn_about(-90, 25, 12)
         # ARC TOWARDS LONG GOAL
-        self.turn_about(-90, 100, -12)
-        self.drive(6, 75)
+        self.turn_about(-90, 25, -12)
+        self.drive(6, 25)
         # REVERSE 24 INCHES
-        self.drive(-24, 100)
+        self.drive(-24, 25)
         # TURN TOWARDS MIDDLE GOAL
-        self.turn_about(45, 100)
+        self.turn_about(45, 25)
         # DRIVE TOWARDS MIDDLE
-        self.drive(36 * math.sqrt(2), 100)
+        self.drive(36 * math.sqrt(2), 25)
         # SCORE ON MIDDLE
 
     def auton_m_l_l(self):
@@ -151,19 +152,19 @@ class Robot:
         # DRIVE STRAIGHT
         self.intake_motors.spin(FORWARD, 100, PERCENT)
         self.outtake_motors.spin(FORWARD, 100, PERCENT)
-        self.drive(12, 100)
+        self.drive(12, 25)
         # ARC TO COLLECT BLOCKS
-        self.turn_about(126.87, 50, 12)
+        self.turn_about(126.87, 25, 12)
         self.intake_motors.stop()
         self.outtake_motors.stop()
         self.hopper.open()
         # ARC TO HOPPER LOADER
-        self.turn_about(53.13, 50, 51)
+        self.turn_about(53.13, 25, 51)
         self.intake_motors.spin(FORWARD, 100, PERCENT)
         self.outtake_motors.spin(FORWARD, 100, PERCENT)
         self.left_drive.set_stopping(COAST)
         self.right_drive.set_stopping(COAST)
-        self.drive(2, 100)
+        self.drive(2, 25)
         # REVERSE
         self.left_drive.set_stopping(BRAKE)
         self.right_drive.set_stopping(BRAKE)
@@ -172,11 +173,11 @@ class Robot:
         self.drive(-12, 100)
         self.hopper.close()
         # ONE POINT TURN
-        self.turn_about(90, 100, -12)
-        self.turn_about(90, 100, 12)
+        self.turn_about(90, 25, -12)
+        self.turn_about(90, 25, 12)
         # DRIVE FORWARD AND SCORE
         self.lift.open()
-        self.drive(6, 100)
+        self.drive(6, 25)
         self.intake_motors.spin(FORWARD, 100, PERCENT)
         self.outtake_motors.spin(FORWARD, 100, PERCENT)
         wait(1, SECONDS)
@@ -190,28 +191,32 @@ class Robot:
         pass
 
     def skills_auton(self):
-        pass
+        self.drive(24, 25)
 
     # ------------- AUTON SELECTION ------------- #
 
     def print_auton(self, code):
         # Auton MODE
         self.brain.screen.clear_screen()
+        self.brain.screen.set_cursor(1, 1)
         self.brain.screen.set_font(FontType.MONO20)
-        self.brain.screen.print("AUTON MODE: ", self.auton_dict["mode"][code[0]].capitalize())
+        self.brain.screen.print("AUTON MODE: ", self.auton_dict["mode"][code[0]])
 
         # Team COLOR
         self.brain.screen.next_row()
+        self.brain.screen.next_row()
         self.brain.screen.set_font(FontType.MONO15)
-        self.brain.screen.print("TEAM COLOR: ", self.auton_dict["team_color"][code[1]].capitalize())
+        self.brain.screen.print("TEAM COLOR: ", self.auton_dict["team_color"][code[1]])
 
         # Setup SIDE
         self.brain.screen.next_row()
-        self.brain.screen.print("AUTON SIDE: ", self.auton_dict["setup_side"][code[2]].capitalize())
+        self.brain.screen.next_row()
+        self.brain.screen.print("AUTON SIDE: ", self.auton_dict["setup_side"][code[2]])
 
         # Auton TYPE
         self.brain.screen.next_row()
-        self.brain.screen.print("AUTON TYPE: ", self.auton_dict["auton_type"][code[3]].capitalize())
+        self.brain.screen.next_row()
+        self.brain.screen.print("AUTON TYPE: ", self.auton_dict["auton_type"][code[3]])
 
     def select_auton(self):
         code = [0, 0, 0, 0]
@@ -242,11 +247,12 @@ class Robot:
 
         self.brain.screen.clear_screen()
         self.brain.screen.set_font(FontType.MONO30)
-        self.brain.screen.print(f"{self.auton_dict['mode'][code[0]].capitalize()} | "
-                                f"{self.auton_dict['setup_side'][code[2]].capitalize()} | "
-                                f"{self.auton_dict['auton_type'][code[3]].capitalize()}")
+        self.brain.screen.set_cursor(1, 1)
+        self.brain.screen.print(self.auton_dict['mode'][code[0]], "|", self.auton_dict['setup_side'][code[2]], "|", self.auton_dict['auton_type'][code[3]])
+        self.brain.screen.new_line()
+        self.brain.screen.new_line()
+        self.brain.screen.set_font(FontType.MONO40)
         self.brain.screen.print("AUTON LOCKED")
-
         self.team_color = self.auton_dict["team_color"][code[1]]
 
         if code[0] == 1:
@@ -266,8 +272,7 @@ class Robot:
 
     # ------------- DRIVER CONTROL FUNCTIONS ------------- #
     def _drive(self):
-        self.right_drive.spin(FORWARD, (self.controller.axis3.position() - self.controller.axis1.position()) / 8.3,
-                              VOLT)
+        self.right_drive.spin(FORWARD, (self.controller.axis3.position() - self.controller.axis1.position()) / 8.3, VOLT)
         self.left_drive.spin(FORWARD, (self.controller.axis3.position() + self.controller.axis1.position()) / 8.3, VOLT)
 
     def _intake(self):
@@ -307,9 +312,13 @@ class Robot:
     # ------------- COMPETITION FUNCTIONS ------------- #
 
     def autonomous(self):
+        self.brain.screen.clear_screen()
+        self.brain.screen.print("Auton Running")
         self.auton()
 
     def driver_control(self):
+        self.brain.screen.clear_screen()
+        self.brain.screen.print("Driver Control")
         self.controller.buttonB.pressed(self._lift)
         self.controller.buttonA.pressed(self._hopper)
         self.controller.buttonDown.pressed(self._cannon)

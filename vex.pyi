@@ -34,6 +34,7 @@ class FontType:
     MONO15: int
     MONO20: int
     MONO30: int
+    MONO40: int
 
 
 # ---------------- Ports ----------------
@@ -71,6 +72,8 @@ class Brain:
         def print(self, *args): ...
         def set_font(self, font: int): ...
         def next_row(self): ...
+        def new_line(self): ...
+        def set_cursor(self, *args): ...
 
     screen: Screen
 
